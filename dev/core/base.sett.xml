@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<core>
+	<projects>
+		<project>
+			<id></id>
+			<name></name>
+			<created></created>
+			<user></user>
+			<folder></folder>
+			
+		</project>
+	</projects>
+	
+	<errorlog></errorlog>
+
+	<class>
+		<dir_list>
+			<folder protected='1'>C:\wamp\www\AdminPCT\dev\core\classes\</folder>
+			<folder protected='1'>C:\wamp\www\AdminPCT\dev\core\interface\</folder>
+		</dir_list>
+	</class>
+</core>
