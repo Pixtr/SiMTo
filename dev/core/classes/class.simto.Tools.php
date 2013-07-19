@@ -3,8 +3,10 @@
 //Page restriction
 if(!PR) die('Restricted area! You cannot load this page directly.');
 
-Interface cleverICore{
-	static function getInst();
-}
+//Most common functions used in application
+class simtoToolsCore{
+	
 
-?>
+	
+	
+}

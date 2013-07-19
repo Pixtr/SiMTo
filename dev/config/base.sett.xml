@@ -15,8 +15,8 @@
 
 	<class>
 		<dir_list>
-			<folder protected='1'>C:\wamp\www\AdminPCT\dev\core\classes\</folder>
-			<folder protected='1'>C:\wamp\www\AdminPCT\dev\core\interface\</folder>
+			<folder protected='1'>C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\</folder>
+			<folder protected='1'>C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\interface\</folder>
 		</dir_list>
 	</class>
 </core>

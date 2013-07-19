@@ -4,7 +4,7 @@
 if(!PR) die('Restricted area! You cannot load this page directly.');
 
 
-class cleverAutoloader
+class simtoAutoloader
 {
 	//Stored instance of class object
 	protected static $inst;
@@ -22,7 +22,7 @@ class cleverAutoloader
 	//Load list of classes
 	protected function __construct()
 	{
-		$this->cache_list = CPCT_ROOT.DS.'projects'.DS.PR_ID.DS.'cache'.DS.'class.list.php';
+		$this->cache_list = SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'cache'.DS.'class.list.php';
 		
 		if (file_exists($this->cache_list))
 			$this->class_list = include($this->cache_list);
@@ -34,10 +34,10 @@ class cleverAutoloader
 	//Get instance object from class
 	public static function getInst()
 	{
-		if (!cleverAutoloader::$inst)
-			cleverAutoloader::$inst = new cleverAutoloader();
+		if (!simtoAutoloader::$inst)
+			simtoAutoloader::$inst = new simtoAutoloader();
 	
-		return cleverAutoloader::$inst;
+		return simtoAutoloader::$inst;
 	}
 	
 	
@@ -69,7 +69,7 @@ class cleverAutoloader
 				else
 				{
 					//If class and Core class does not exists, throw and exception
-					//throw new cleverException('Class '.$classname.' does not exists and do not have Core class.','cleverAutoloader_CLASS',true);
+					//throw new simtoException('Class '.$classname.' does not exists and do not have Core class.','simtoAutoloader_CLASS',true);
 				}
 			}
 			else
@@ -86,7 +86,7 @@ class cleverAutoloader
 		else
 		{
 			//If Core class does not exists, throw and exception
-			//throw new cleverException('Class '.$classname.' does not exists.','cleverAutoloader_CORECLASS',true);
+			//throw new simtoException('Class '.$classname.' does not exists.','simtoAutoloader_CORECLASS',true);
 		}
 	}
 	
@@ -98,7 +98,7 @@ class cleverAutoloader
 		$dir_list = array();
 		
 		//Load list of all class folders for core
-		$cdir_xml = simplexml_load_file(CPCT_ROOT.DS.'core'.DS.'base.sett.xml');
+		$cdir_xml = simplexml_load_file(SIMTO_ROOT.DS.'config'.DS.'base.sett.xml');
 		foreach($cdir_xml->class->dir_list->folder as $dir_path)
 		{
 			array_push($dir_list,$dir_path);
@@ -107,7 +107,7 @@ class cleverAutoloader
 		//Load list of all class folders for project
 		if(PR_ID && PR_ID != 'core')
 		{
-			$pcdir_xml = simplexml_load_file(CPCT_ROOT.DS.'projects'.DS.PR_ID.DS.'base.sett.xml');
+			$pcdir_xml = simplexml_load_file(SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'base.sett.xml');
 			foreach($pcdir->class->dir_list->folder as $dir_path)
 			{
 				array_push($dir_list,$dir_path);

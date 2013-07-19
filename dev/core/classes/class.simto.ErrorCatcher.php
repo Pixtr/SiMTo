@@ -3,7 +3,7 @@
 //Page restriction
 if(!PR) die('Restricted area! You cannot load this page directly.');
 
-class cleverErrorCatcherCore implements cleverICore
+class simtoErrorCatcherCore implements simtoICore
 {
 	//Stored instance of class object
 	protected static $inst;
@@ -23,9 +23,9 @@ class cleverErrorCatcherCore implements cleverICore
 		
 		//Find and set error log folder where are all errors stored
 		if(PR_ID && PR_ID != 'core')
-			$logs_xml = simplexml_load_file(CPCT_ROOT.DS.'projects'.DS.PR_ID.DS.'base.sett.xml');
+			$logs_xml = simplexml_load_file(SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'base.sett.xml');
 		else
-			$logs_xml = simplexml_load_file(CPCT_ROOT.DS.'core'.DS.'base.sett.xml');
+			$logs_xml = simplexml_load_file(SIMTO_ROOT.DS.'core'.DS.'base.sett.xml');
 		
 		$this->errorlog_folder = $logs_xml->errorlog[0];
 		
@@ -64,33 +64,21 @@ class cleverErrorCatcherCore implements cleverICore
 	//Get instance object from class
 	public static function getInst()
 	{
-		if (!cleverErrorCatcher::$inst)
-			cleverErrorCatcher::$inst = new cleverErrorCatcher();
+		if (!simtoErrorCatcher::$inst)
+			simtoErrorCatcher::$inst = new simtoErrorCatcher();
 	
-		return cleverErrorCatcher::$inst;
+		return simtoErrorCatcher::$inst;
 	}
 	
 	
 	//Handle the error
 	public function handler($errno, $errstr, $errfile, $errline)
-	{
-		
-		//TODO: Vytvořit vlastní zobrazování chyb pomocí layoutů
-		//TODO: Nastavení úrovně zobrazení pro uživatele
-		
-		
+	{		
 		//Error displaying
 		if(PR_ERRSHOW)
 			ini_set('display_errors', 1);
 		else
 			ini_set('display_errors', 0);
-		
-		
-		//TODO: Ukládání chyb do externího souboru
-		
-		
-		
-		//TODO: Oznámení o chybě super administrátorovi
 		
 	}
 	

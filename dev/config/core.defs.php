@@ -1,4 +1,11 @@
 <?php
+/* 2013 CleverOn SiMTo - Site Management Tool
+ *
+ * Author: CleverOn Group
+ * Proprietary software license
+ * All rights reserved for CleverOn Group
+ */
+
 //Page restriction
 if(basename($_SERVER['PHP_SELF']) == 'core.defs.php') die('Restricted area! You cannot load this page directly.');
 
@@ -10,21 +17,21 @@ define('PR', TRUE);
 define('DS', DIRECTORY_SEPARATOR);
 
 //Application temporary folder
-define('CPCT_TEMP', 'temp_folder');
+define('SIMTO_TEMP', 'temp_folder');
 
 //Utilization of database server
-define('CPCT_MYSQL', TRUE);
+define('SIMTO_MYSQL', TRUE);
 
 //Database server
-define('CPCT_DBSERVER', 'localhost');
+define('SIMTO_DBSERVER', 'localhost');
 
 //Database login
-define('CPCT_DBLOGIN', 'Encrypted login');
+define('SIMTO_DBLOGIN', 'Encrypted login');
 
 //Databse password
-define('CPCT_DBPASS', 'Encrypted password');
+define('SIMTO_DBPASS', 'Encrypted password');
 
 //Default language
-define('CPCT_LANG', 'en');
+define('SIMTO_LANG', 'en');
 
 ?>
