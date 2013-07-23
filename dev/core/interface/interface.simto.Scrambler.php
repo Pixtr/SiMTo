@@ -6,12 +6,15 @@
  * All rights reserved for CleverOn Group
  */
 
-
 //Page restriction
 if(!PR) die('Restricted area! You cannot load this page directly.');
 
-Interface simtoICore{
-	static function getInst();
+Interface simtoIScrambler{
+	static function getInst($key);
+	
+	public function hide($pass);
+	
+	public function show($pass);
 }
 
 ?>
