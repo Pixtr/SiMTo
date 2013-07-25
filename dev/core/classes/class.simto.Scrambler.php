@@ -18,6 +18,7 @@ class simtoScramblerCore implements simtoICore
 		
 	}
 	
+	
 	//Get instance object from class
 	public static function getInst()
 	{
@@ -28,8 +29,27 @@ class simtoScramblerCore implements simtoICore
 	}
 	
 	
-	//Mesure strength of password
-	public function strength($pass,$res = 'text'){
+	//Scrambler encrypts word into password
+	public function encrypt($pass)
+	{
+		
+	}
+	
+	//Scrambler decrypts password back to word
+	public function decrypt($pass)
+	{
+		
+	}
+	
+	//Scrambler change method of decryption on every saved password
+	public function change()
+	{
+		
+	}
+	
+	
+	//Mesure strength of password (password,option if result should be text or number)
+	public function passStrength($pass,$res = 'text'){
 		$numb = array('1','2','3','4','5','6','7','8','9','0');
 		$lower = array('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
 		$upper = array('A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z');
@@ -66,7 +86,7 @@ class simtoScramblerCore implements simtoICore
 			$str = $str / $len;
 			$str = $str + $len;
 		}
-			
+		
 		if($res != 'text'){
 			return $str;
 		}
