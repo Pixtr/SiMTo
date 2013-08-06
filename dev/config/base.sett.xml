@@ -1,5 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <core>
+	<languages>
+		<language>
+			<prefix>cs</prefix>
+			<title>Čeština</title>
+		</language>
+		<language>
+			<prefix>en</prefix>
+			<title>English</title>
+		</language>
+	</languages>
+	
 	<projects>
 		<project>
 			<id></id>

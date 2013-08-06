@@ -30,6 +30,9 @@ define('PR_HISTORY', TRUE);
 	
 //Page generation time
 define('PR_PAGETIME', TRUE);
+
+//Default language
+define('PR_LANG', 'en');
 	
 	
 ?>

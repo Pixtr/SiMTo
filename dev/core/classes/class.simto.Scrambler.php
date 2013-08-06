@@ -47,6 +47,12 @@ class simtoScramblerCore implements simtoICore
 		
 	}
 	
+	//Sets decryption method
+	public function useModul($modul)
+	{
+		
+	}
+	
 	
 	//Mesure strength of password (password,option if result should be text or number)
 	public function passStrength($pass,$res = 'text'){
