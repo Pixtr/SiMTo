@@ -5,7 +5,7 @@
 			<prefix>cs</prefix>
 			<title>Čeština</title>
 		</language>
-		<language>
+		<language dual="1">
 			<prefix>en</prefix>
 			<title>English</title>
 		</language>

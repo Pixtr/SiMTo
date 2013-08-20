@@ -67,7 +67,8 @@ class simtoScramblerCore implements simtoICore
 		$upper_c = 0;
 		$other_c = 0;
 		$str = 0;
-			
+		
+		//Find how many numbers, lower, upper and other characters password has
 		for($i=0; $i<$len; $i++){
 			if(in_array($pass_arr[$i],$lower)){
 				$lower_c++;
@@ -80,12 +81,14 @@ class simtoScramblerCore implements simtoICore
 			}
 		}
 			
-			
+		//Calculate strength of password
+		//Calculate how many variates are in password
 		$co = 0;
 		if($numb_c == 0){ $numb_c = ''; }else{ $co++; }
 		if($lower_c == 0){ $lower_c = ''; }else{ $co++; }
 		if($upper_c == 0){ $upper_c = ''; }else{ $co++; }
-			
+		
+		//Logarithm for calculation of strength
 		if($len != 0){
 			$str = $numb_c * $lower_c * $upper_c * $co;
 			$str = $str + $other_c;
@@ -93,20 +96,44 @@ class simtoScramblerCore implements simtoICore
 			$str = $str + $len;
 		}
 		
-		if($res != 'text'){
-			return $str;
-		}
+		if($res = 'text')
+		{
+			//Default text results
+			$default = array();
+			$default[0] = t('No password','0res','Scrambler/Passlength');
+			$default[1] = t('Very weak','1res','Scrambler/Passlength');
+			$default[5] = t('Weak','5res','Scrambler/Passlength');
+			$default[9] = t('Normal','9res','Scrambler/Passlength');
+			$default[14] = t('Strong','14res','Scrambler/Passlength');
+			$default[20] = t('Very strong','20res','Scrambler/Passlength');
+			$default[30] = t('Optimal','30res','Scrambler/Passlength');
+			$default[999] = t('Unbreakable','999res','Scrambler/Passlength');
 			
-		if($str == 0){ return 'No password';
-		}elseif(($str > 0) && ($str < 5)){ return 'Very weak';
-		}elseif(($str >= 5) && ($str < 9)){ return 'Weak';
-		}elseif(($str >= 9) && ($str < 14)){ return 'Normal';
-		}elseif(($str >= 14) && ($str < 20)){ return 'Strong';
-		}elseif(($str >= 20) && ($str < 30)){ return 'Very strong';
-		}elseif(($str >= 30)){ return 'Optimal'; }
+			//Finding of special settings for text result
+			$lines = array();
+			simtoDbaser::getInst()->dbUse(PR_DBASE);
+			$options = array('where' => 'pr_id = "'.PR_ID.'" AND class = "strpass"');
+			if(simtoDbaser::getInst()->select('tab_scrambler','pr_id,class,setting,item',$options))
+			{
+				$rows = simtoDbaser::getInst()->resOut();
+				foreach($rows as $row)
+					$lines[$row['setting']] = tDB($row['item']);
+			}
+			
+			if(empty($lines))
+				$lines = $default;
+			
+			$result = '';
+			ksort($lines);
+			foreach($lines as $key => $line)
+				if($key <= $str)
+					$result = $line;
+		}
+		else
+			$result = $str;
+			
+		return $result;
 	}
+
 }
-
-
-
 ?>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<root>
+	<dbases>
+		<dbase>
+			<name>dbasename</name>	<!-- Name of database -->
+			<tagname>Database 1</tagname>
+			<description>Popis database</description>
+			<path>C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\config\dbasename.sett.xml</path>	<!-- Path for database setting file -->
+		</dbase>
+		<dbase>
+			<name>dbasename2</name>	<!-- Name of database -->
+			<tagname>Database 2</tagname>
+			<description>Popis database</description>
+			<path>C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\config\dbasename.sett.xml</path>	<!-- Path for database setting file -->
+		</dbase>
+	</dbases>
+	
+	<types>
+		<type>
+			<name>BIT</name>
+			<dtype>numeric</dtype>
+		</type>
+		<type>
+			<name>INT</name>
+			<dtype>numeric</dtype>
+		</type>
+		<type>
+			<name>VARCHAR</name>
+			<dtype>string</dtype>
+		</type>
+	</types>
+</root>

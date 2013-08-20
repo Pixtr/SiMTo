@@ -33,7 +33,9 @@ class simtoDbaserCore implements simtoICore
 	protected $errors;		//Error list
 	protected $query;		//Last sql query
 	
-	
+	//Objects of settings
+	protected $dbase_sett;	//Databases settings
+	protected $table_sett;	//Tables settings
 
 	public function __construct()
 	{
@@ -41,6 +43,8 @@ class simtoDbaserCore implements simtoICore
 		$this->username = SIMTO_DBLOGIN;
 		$this->password = SIMTO_DBPASS;
 		$this->connect();
+		$this->dbase_sett = new simtoXML(SIMTO_ROOT.DS.'config'.DS.'dbase.sett.xml');
+		$this->dbUse(PR_DBASE);
 	}
 	
 	public function __destruct()
@@ -83,10 +87,18 @@ class simtoDbaserCore implements simtoICore
 	public function dbUse($dbase)
 	{
 		if(!mysqli_select_db($dbase, $this->mysql))
-			//error handeling
+			//TODO: error handeling
 			return false;
 		else
+		{	
+			$dbase_path = $this->dbase_sett->find(array('c' => '/dbases/dbase[name="'.$dbase.'"]','w' => 'path'));
+			if(!empty($dbase_path))
+				$this->table_sett = new simtoXML($dbase_path);
+			else 
+				//TODO: exception
+				
 			return true;
+		}
 	}
 	
 	//Adds data to temporaly row in array ($html - strip(false/true/'<allowed tags>'))
@@ -139,15 +151,18 @@ class simtoDbaserCore implements simtoICore
 	}
 	
 	//Inserts temporaly row to database
-	public function insert($table = '')
+	public function insert($table = '',$row = '')
 	{
 		if(empty($table))
 			return false;
 		
 		$code = 'INSERT INTO '.$table.' (';
 		
+		if(empty($row))
+			$row = $this->row;
+		
 		$i = 0; $cols = ''; $vals = '';
-		foreach($this->row as $col => $val)
+		foreach($row as $col => $val)
 		{
 			if($i > 0)
 			{
@@ -170,7 +185,7 @@ class simtoDbaserCore implements simtoICore
 	}
 	
 	//Updates data from row in table
-	public function update($table = '',$options = array())
+	public function update($table = '',$options = array(),$row = '')
 	{
 		if(empty($table))
 			return false;
@@ -184,8 +199,11 @@ class simtoDbaserCore implements simtoICore
 		
 		$code = 'UPDATE '.$table.' SET ';
 		
+		if(empty($row))
+			$row = $this->row;
+		
 		$i = 0; $cols = ''; $vals = '';
-		foreach($this->row as $col => $val)
+		foreach($row as $col => $val)
 		{
 			if($i > 0)
 				$code .= ',';
@@ -604,10 +622,94 @@ class simtoDbaserCore implements simtoICore
 	}
 	
 	//Return last ID
-	public function lastID()
+	public function lastId()
 	{
 		return mysqli_insert_id($this->mysql);
 	}
 	
+	//Returns edited value by columns settings
+	protected function rightValue($table,$col,$value)
+	{
+		$this->table_sett->find(array('c' => 'table[name="'.$table.'"]/columns/column/settings[name="'.$col.'"]',
+				'w' => '..', 'r' => 'c'));
+		
+		$tran = $this->table_sett->nodeValue('@translate');
+		if($tran == 1)
+		{
+			$tid = simtoTranslator::getInst()->createDbWord($value,$table.'/'.$col);
+			$value = '"'.$tid.'"';
+			return $value;
+		}
+		
+		$scram = $this->table_sett->nodeValue('@scrambler');
+		if($scram != 0 && simtoScrambler::getInst()->useModul($scram))
+		{
+			$pass = simtoScrambler::getInst()->encrypt($value);
+			$value = '"'.$pass.'"';
+			return $value;
+		}
+		
+		$html = $this->table_sett->nodeValue('security/html/strip');
+		if($html == 1)
+		{
+			$tags = $this->table_sett->nodeValue('security/html/tags/tag',false);
+			$tags = $tags[0];
+			$allowed = '';
+			foreach($tags as $tag)
+				$allowed .= '<'.$tag.'>';
+			$value = $this->htmlStrip($value,$allowed);
+			
+		}
+		
+		$safe = $this->table_sett->nodeValue('security/safe');
+		if($safe == 1)
+			$value = $this->safeData($value);
+		
+		$ctype = $this->table_sett->nodeValue('security/type');
+		if($ctype == 1)
+		{
+			$ttype = $this->table_sett->nodeValue('settings/type');
+			$dtype = $this->dbase_sett->find(array('s' => 'types', 'c' => 'type[name="'.$ttype.'"]', 'w' => 'dtype'));
+			switch($dtype)
+			{
+				case 'string':
+					$value = '"'.$value.'"';
+				break;
+				
+				case 'boolean':
+				case 'numeric':
+					if(!is_numeric($value))
+						$value = 0;
+						//TODO: exception
+				break;
+			}
+		}	
+		
+		return $value;
+	}
+	
+	//Returns true if column is language column
+	public function isLang($table,$col)
+	{
+		
+	}
+	
+	//Returns name of scrambler modul if column is scrambler column
+	public function isScram($table,$col)
+	{
+		
+	}
+	
+	//Instalation of tables
+	public function instal()
+	{
+		
+	}
+
+	//Checks if settings of tables are correct
+	public function tableSettingsCheck()
+	{
+		
+	}
 }
 ?>

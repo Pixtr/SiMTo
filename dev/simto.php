@@ -48,6 +48,7 @@ class simtoCore{
 		//Joints basic setting of application
 		require_once(PR_ROOT.'/config/base.defs.php');
 		require_once(SIMTO_ROOT.'/config/core.defs.php');
+		require_once(SIMTO_ROOT.'/core/functions.php');
 		require_once(SIMTO_ROOT.'/core/classes/class.simto.Autoloader.php');
 		
 		//Default class autoloader

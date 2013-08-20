@@ -33,6 +33,9 @@ define('PR_PAGETIME', TRUE);
 
 //Default language
 define('PR_LANG', 'en');
+
+//Default language
+define('PR_DBASE', 'databasename');
 	
 	
 ?>
