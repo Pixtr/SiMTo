@@ -47,7 +47,7 @@ class simtoScramblerCore implements simtoICore
 		
 	}
 	
-	//Sets decryption method
+	//Sets decryption method and checks if modul exists (returns true or false if don't)
 	public function useModul($modul)
 	{
 		

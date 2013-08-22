@@ -1,10 +1,10 @@
 <?php
 
 //Page restriction
-if(!PR) die('Restricted area! You cannot load this page directly.');
+//if(!PR) die('Restricted area! You cannot load this page directly.');
 
 //Most common functions used in application
-class simtoToolsCore{
+class simtoTools{
 	//Stored instance of class object
 	protected static $inst;
 
@@ -115,4 +115,13 @@ class simtoToolsCore{
 		else 
 			return false;
 	}
+
+	//Saves data to file by creating it or rewriting it
+	public static function saveToFile($file,$data){
+		$handler = fopen($file, 'w+');
+		fwrite($handler,$data);
+		fclose($handler);
+		return true;
+	}	
+
 }

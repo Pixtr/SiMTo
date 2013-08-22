@@ -31,10 +31,21 @@ class simtoXMLCore //implements simtoICore
 		if(file_exists($file) || !empty($file))
 		{
 			$this->xml = new DOMDocument();
+			$this->xml->formatOutput = true;
+			$this->xml->preserveWhiteSpace = false;
 			$this->xml->load($file);
 		}
-		else 
+		else
+		{
 			$this->xml = new DOMDocument('1.0', 'UTF-8');
+			$this->xml->formatOutput = true;
+			$this->xml->preserveWhiteSpace = false;
+		}
+	}
+	
+	public function __destruct()
+	{
+		//TODO: uložení rozdělaného xml
 	}
 	
 	//Get instance object from class
@@ -62,7 +73,7 @@ class simtoXMLCore //implements simtoICore
 	public function find($options = array())
 	{
 		$options = array_merge(array(
-				's' =>	'',		//node where xpath Starts looking
+				's' =>	'',		//name of node where xpath Starts looking
 				'c'	=>	'',		//Conditions for search (path)
 				'w'	=>	'',		//path to What you looking for
 				'r'	=>	't'		//type of Result (t = first result in text, a = all results in array, n = nodelist, c = cached node)
@@ -73,6 +84,7 @@ class simtoXMLCore //implements simtoICore
 		$start = '';
 		$result = '';
 		
+		//Prepares path for searching
 		if(!empty($options['s']))
 			$start = $this->xml->getElementsByTagName($options['s'])->item(0);
 		
@@ -87,6 +99,7 @@ class simtoXMLCore //implements simtoICore
 				$query = $options['w'];
 		}	
 		
+		//Searches for result
 		if(empty($query) && !empty($start))
 			$resnode = $start;
 		elseif(!empty($query) && empty($start))
@@ -96,24 +109,25 @@ class simtoXMLCore //implements simtoICore
 		else 
 			$resnode = $this->xml->createTextNode('');
 		
+		//Prepares result
 		if($resnode->length > 0)
 		switch($options['r'])
 		{
 			default:
-			case 't':
+			case 't':	//String result
 				$result = $resnode->item(0)->textContent;	
 			break;
 			
-			case 'a':
+			case 'a':	//Array result
 				foreach($resnode as $node)
 					$result[] = $node->nodeValue;
 			break;
 			
-			case 'n':
+			case 'n':	//Nodelist result
 				$result = $resnode;
 			break;
 			
-			case 'c':
+			case 'c':	//Global cached nodelist result
 				$this->clearCnode();
 				$this->cnode = $resnode;
 				$result = true;
@@ -123,17 +137,26 @@ class simtoXMLCore //implements simtoICore
 		return $result;
 	}
 	
+	
 	//Finds node within another node and returns it value
+	//Tagname could be path to right node like node1/node2/node3 and so on
+	//Tagname can also be attribute name but must have @ before name like node1/@attribute1
+	//Variable first mean that function will return string of a first node value
+	//If variable first is false function will return array of nodes value
+	//You can use specific nodelist if you parse it trougth variable node or use cached nodelist from function find if you leave it empty 
 	public function nodeValue($tagname,$first = true,$node = '')
 	{
+		//Prepare path to right node
 		$tags = explode('/',$tagname);
+		
+		//Make sure it uses right nodelist
 		if(!is_object($node) && is_object($this->cnode))
 			$node = $this->cnode;
 		elseif(!is_object($node))
 			return false;
 		
 		$result = '';
-		if($first)
+		if($first)		//If you want only first value 
 		{
 			$fnode = $node->item(0);
 			foreach($tags as $tag)
@@ -150,12 +173,12 @@ class simtoXMLCore //implements simtoICore
 					$fnode = $fnode->getElementsByTagName($tag)->item(0);
 				
 			}
-			if(is_object($fnode))
+			if(get_class($fnode) == 'DOMElement')
 				$result = $fnode->textContent;
 			else 
 				$result = $fnode;
 		}
-		else
+		else		//If you want array of all values
 		{
 			$i = 0;
 			foreach($node as $n)
@@ -185,7 +208,7 @@ class simtoXMLCore //implements simtoICore
 				else 
 					$result[$i][] = $n;
 				$i++;
-			}
+			}			//Result is two dimensional array in format array('0' => array('0' => 'value1','1' => 'value2'....))
 		}
 		
 		return $result;
@@ -197,34 +220,189 @@ class simtoXMLCore //implements simtoICore
 		unset($this->cnode);
 	}
 	
-	
-	public function add()
+	//Adds single node to xml document
+	//Path is xpath to place where node should be created, last item of path is name of node
+	//Start is specific node from which should path be calculated, finds root element if leaved empty
+	public function addNode($path,$data,$start = '')
 	{
+		if(empty($start) || get_class($start) != 'DOMElement')
+			$root = $this->xml->documentElement;
+		else
+			$root = $start;
 		
+		if(empty($path))
+			$tags = array();
+		else
+			$tags = explode('/',$path);
+		$nodename = array_pop($tags);
+		
+		$root = $this->selectNode($tags, $root);
+		
+		$node = $root->getElementsByTagName($nodename)->item(0);
+		if(empty($node))
+		{
+			$newnode = $this->xml->createElement($nodename,$data);
+			$root->appendChild($newnode);
+		}
+		else
+			$node->nodeValue = $data;
 	}
 	
-	
-	public function edit()
+	//Moves node from one location to another
+	public function moveNode($node,$path,$start = '')
 	{
+		if(empty($start) || get_class($start) != 'DOMElement')
+			$root = $this->xml->documentElement;
+		else
+			$root = $start;
 		
+		if(get_class($node) != 'DOMElement')
+			//TODO: exception
+			return false;
+		
+		if(empty($path))
+			$tags = array();
+		else
+			$tags = explode('/',$path);
+		
+		$root = $this->selectNode($tags, $root);
+		$root->appendChild($node);
 	}
 	
-	
-	public function delete()
+	//Imports node from another xml document
+	public function importNode($node,$path,$start = '')
 	{
+		if(get_class($node) != 'DOMElement')
+			//TODO: exception
+			return false;
 		
+		$imported = $this->xml->importNode($node, true);
+		
+		if(empty($start) || get_class($start) != 'DOMElement')
+			$root = $this->xml->documentElement;
+		else
+			$root = $start;
+		
+		if(empty($path))
+			$tags = array();
+		else
+			$tags = explode('/',$path);
+		
+		$root = $this->selectNode($tags, $root);
+		$root->appendChild($imported);
+	}
+	
+	//Creates or sets attribute to node
+	//Variable attr could be string in format name=value or array of attributes for node
+	public function setAttr($path,$attr,$start = '')
+	{
+		if(empty($start) || get_class($start) != 'DOMElement')
+			$root = $this->xml->documentElement;
+		else
+			$root = $start;
+		
+		if(empty($path))
+			$tags = array();
+		else
+			$tags = explode('/',$path);
+		
+		$root = $this->selectNode($tags, $root);
+		if(!is_array($attr))
+		{
+			$key = substr($attr,0,strpos($attr,'='));
+			$value = substr($attr,strpos($attr,'=')+1);
+			$attr = array($key => $value);
+		}
+		
+		foreach($attr as $key => $value)
+		{
+			if($root->hasAttribute($key))
+				$root->setAttribute($key,$value);
+			else 
+			{
+				$attribute = $this->xml->createAttribute($key);
+				$attribute->value = $value;
+				$root->appendChild($attribute);
+			}
+		}	
+	}
+
+	//Removes whole node from XML document and returns removed node
+	public function deleteNode($path,$start = '')
+	{
+		if(empty($start) || get_class($start) != 'DOMElement')
+			$root = $this->xml->documentElement;
+		else
+			$root = $start;
+		
+		if(empty($path))
+			$tags = array();
+		else
+			$tags = explode('/',$path);
+		
+		$node = $this->selectNode($tags, $root);
+		$parent = $node->parentNode;
+		return $parent->removeChild($node);
+	} 
+	
+	//Removes attribute from node and returns value of removed attribute
+	public function deleteAttr($path,$start = '')
+	{
+		if(empty($start) || get_class($start) != 'DOMElement')
+			$root = $this->xml->documentElement;
+		else
+			$root = $start;
+		
+		if(empty($path))
+			$tags = array();
+		else
+			$tags = explode('/',$path);
+		$attname = array_pop($tags);
+		
+		$node = $this->selectNode($tags, $root);
+		return $node->removeAttribute($attname);
+	}
+	
+	//Returns right node based on path tags
+	protected function selectNode($tags,$root)
+	{
+		foreach($tags as $tag)
+		{
+			$node = $root->getElementsByTagName($tag)->item(0);
+			if(empty($node))
+			{
+				$newnode = $this->xml->createElement($tag);
+				$root = $root->appendChild($newnode);
+			}
+			else
+				$root = $node;
+		}
+		return $root;
 	}
 	
 	
 	public function save()
 	{
+		$path = simtoTools::getInst()->preparePath($this->filepath);
+		if($path)
+		{
+			if(simtoTools::getInst()->saveToFile($path,$this->show()))
+				return true;
+		}
 		
+		return false;
 	}
 	
 	
 	public function create()
 	{
 		
+	}
+	
+	//Returns xml in string
+	public function show()
+	{
+		return $this->xml->saveXML();
 	}
 }
 ?>

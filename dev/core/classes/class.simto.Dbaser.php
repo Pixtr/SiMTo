@@ -94,37 +94,27 @@ class simtoDbaserCore implements simtoICore
 			$dbase_path = $this->dbase_sett->find(array('c' => '/dbases/dbase[name="'.$dbase.'"]','w' => 'path'));
 			if(!empty($dbase_path))
 				$this->table_sett = new simtoXML($dbase_path);
-			else 
+			else
+			{
+				$this->table_sett = new simtoXML(PR_ROOT.DS.'config'.DS.$dbase.'.sett.xml');
+				$this->dbase_sett->addNode(); 	//TODO: přidat adresu do nastavení database
+			}
 				//TODO: exception
 				
 			return true;
 		}
 	}
 	
-	//Adds data to temporaly row in array ($html - strip(false/true/'<allowed tags>'))
-	public function addCell($col = '',$data = '',$html = false)
+	//Adds data to temporaly row in array
+	public function addCell($col,$data = '')
 	{
-		if(empty($col))
-			return false;
-		
-		$data = $this->safeData($data);
-		
-		if($html !== false)
-			$data = $this->htmlStrip($data,$html);
-		
 		$this->row[$col] = $data;
 	}
 	
-	//Adds whole temporaly row from array ($html - strip(false/true/'<allowed tags>'))
-	public function addRow($data = array(),$html = false)
-	{
-		$data = $this->safeData($data);
-	
-		if($html !== false)
-			$data = $this->htmlStrip($data,$html);
-	
-		foreach($data as $col => $val)
-			$this->row[$col] = $val;
+	//Adds whole temporaly row from array
+	public function addRow($data = array())
+	{	
+		$this->row = $data;
 	}
 	
 	//Clears temporaly row
@@ -151,8 +141,8 @@ class simtoDbaserCore implements simtoICore
 	}
 	
 	//Inserts temporaly row to database
-	public function insert($table = '',$row = '')
-	{
+	public function insert($table,$row = '')
+	{		
 		if(empty($table))
 			return false;
 		
@@ -170,7 +160,7 @@ class simtoDbaserCore implements simtoICore
 				$vals .= ',';
 			}	
 			$cols .= $col;
-			$vals .= $val;
+			$vals .= $this->rightValue($table,$col,$val);
 			$i++;
 		}
 		
@@ -185,8 +175,8 @@ class simtoDbaserCore implements simtoICore
 	}
 	
 	//Updates data from row in table
-	public function update($table = '',$options = array(),$row = '')
-	{
+	public function update($table,$options = array(),$row = '')
+	{	
 		if(empty($table))
 			return false;
 		
@@ -208,7 +198,7 @@ class simtoDbaserCore implements simtoICore
 			if($i > 0)
 				$code .= ',';
 			
-			$code .= $col.'='.$val;
+			$code .= $col.'='.$this->rightValue($table,$col,$val);
 			$i++;
 		}
 		
@@ -232,7 +222,7 @@ class simtoDbaserCore implements simtoICore
 	}
 	
 	//Deletes row from table
-	public function delete($table = '',$options = array())
+	public function delete($table,$options = array())
 	{
 		if(empty($table))
 			return false;
@@ -266,11 +256,8 @@ class simtoDbaserCore implements simtoICore
 	}
 	
 	//Simple select of rows from table
-	public function select($table = '',$cols = '*',$options = array())
+	public function select($table,$cols = '*',$options = array())
 	{
-		if(empty($table))
-			return false;
-		
 		$options = array_merge(array(
 				'where' => '',
 				'group' => '',
@@ -691,13 +678,27 @@ class simtoDbaserCore implements simtoICore
 	//Returns true if column is language column
 	public function isLang($table,$col)
 	{
+		$this->table_sett->find(array('c' => 'table[name="'.$table.'"]/columns/column/settings[name="'.$col.'"]',
+				'w' => '..', 'r' => 'c'));
 		
+		$tran = $this->table_sett->nodeValue('@translate');
+		if($tran == 1)
+			return true;
+		else
+			return false;
 	}
 	
 	//Returns name of scrambler modul if column is scrambler column
 	public function isScram($table,$col)
 	{
+		$this->table_sett->find(array('c' => 'table[name="'.$table.'"]/columns/column/settings[name="'.$col.'"]',
+				'w' => '..', 'r' => 'c'));
 		
+		$scram = $this->table_sett->nodeValue('@scrambler');
+		if($scram != 0)
+			return $scram;
+		else 
+			return false;
 	}
 	
 	//Instalation of tables

@@ -95,12 +95,39 @@ print_r($result);
 
 
 include('dev/core/classes/class.simto.XML.php');
+include('dev/core/classes/class.simto.Tools.php');
 
 $obj = new simtoXMLCore('dev/config/dbasename.sett.xml');
+$obj2 = new simtoXMLCore('dev/config/dbase.sett.xml');
 
-$type = $obj->find(array('c' => 'table[name="tab_name"]/columns/column/settings[name="column_name"]', 'w' => '..', 'r' => 'c'));
-$type = $obj->nodeValue('tag',false);
-print_r($type);
+$type = $obj->find(array('c' => 'table[name="tab_name"]/columns/column/settings[name="column_name"]', 'w' => '..', 'r' => 'n'));
+//$type = $obj->nodeValue('tag',false);
+print_r($obj->show());
+
+$start = $obj->find(array(	'c' => 'table[name="tab_name"]/columns/column', 
+							'w' => '..', 
+							'r' => 'n'))->item(0);
+//$start = $start->item(0);
+$obj->addNode('table/name','neco');
+print_r($obj->show());
+
+$obj2->importNode($type->item(0), '');
+print_r($obj2->show());
+
+$obj->setAttr('table', 'instaled=1');
+print_r($obj->show());
+
+$oldnode = $obj->deleteNode('table/columns');
+print_r($obj->show());
+print_r($oldnode);
+
+$oldatt = $obj->deleteAttr('table/instaled');
+print_r($obj->show());
+print_r($oldatt);
+
+$obj->filePath(dirname(__FILE__).'\test.xml');
+$obj->save();
+
 //$res = $obj->find(array('c' => '', 'w' => '../../column', 'r' => 'c'));
 
 //$res = $obj->nodeValue('tag',false);

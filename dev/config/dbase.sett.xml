@@ -3,14 +3,39 @@
 	<dbases>
 		<dbase>
 			<name>dbasename</name>	<!-- Name of database -->
-			<tagname>Database 1</tagname>
-			<description>Popis database</description>
+			<tagname langid="" langcat="dbases/dbname">Database 1</tagname>
+			<description langid="" langcat="dbases/dbdesc">Popis database</description>
 			<path>C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\config\dbasename.sett.xml</path>	<!-- Path for database setting file -->
+			<default>
+				<columns>		<!-- Default sloupky v každé tabulce dané database, nastavení se zkopíruje do nastavení tabulek-->
+					<column visible="1" scrambler="0" translate="0">
+						<tagname langid="" langcat="tables/colname">Názav sloupku pro nadpis</tagname>
+						<description langid="" langcat="tables/coldesc">Popis sloupku pro pozdější identifikování</description>
+						<settings>
+							<name>id</name>
+							<type>INTEGER</type>
+							<lenght></lenght>
+							<default></default>
+							<null>0</null>
+							<key>Primary</key>
+							<auto>1</auto>
+						</settings>
+						<security>
+							<html>
+								<strip>0</strip>
+								<tags></tags>
+							</html>			
+							<safe>0</safe>
+							<type>0</type>	
+						</security>
+					</column>
+				</columns>
+			</default>
 		</dbase>
 		<dbase>
 			<name>dbasename2</name>	<!-- Name of database -->
-			<tagname>Database 2</tagname>
-			<description>Popis database</description>
+			<tagname langid="" langcat="dbases/dbname">Database 2</tagname>
+			<description langid="" langcat="dbases/dbdesc">Popis database</description>
 			<path>C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\config\dbasename.sett.xml</path>	<!-- Path for database setting file -->
 		</dbase>
 	</dbases>

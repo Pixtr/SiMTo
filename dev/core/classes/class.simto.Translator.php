@@ -110,8 +110,10 @@ class simtoTranslatorCore implements simtoICore
 		
 		$translate = $string;
 		if(!$this->inDc($id, $cat, 'simto'))
+		{
 			if(!empty($id))
 				$this->addWord($string, $id, $cat);
+		}
 		elseif($active = $this->inDc($id, $cat, 'active'))
 			$translate = $active;
 		elseif($default = $this->inDc($id, $cat, 'default'))
@@ -177,7 +179,7 @@ class simtoTranslatorCore implements simtoICore
 	}
 	
 	//Creates new dictionary file copying simto dictionary
-	protected function addDc($lang,$filename)
+	protected function addDc($lang, $filename)
 	{
 		$simto_path = PR_ROOT.DS.'langs'.DS.'simto'.DS.$filename;
 		$lang_path = PR_ROOT.DS.'langs'.DS.$lang.DS.$filename;
