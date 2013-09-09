@@ -7,7 +7,7 @@
  */
 
 //Page restriction
-if(!PR) die('Restricted area! You cannot load this page directly.');
+if(!defined('PR')) die('Restricted area! You cannot load this page directly.');
 
 class simtoDbaserCore implements simtoICore
 {
@@ -21,6 +21,7 @@ class simtoDbaserCore implements simtoICore
 	protected $hostname;
 	protected $username;
 	protected $password;
+	protected $dbase;		//Selected database
 	
 	//Temporaly row
 	protected $row = array();
@@ -43,7 +44,7 @@ class simtoDbaserCore implements simtoICore
 		$this->username = SIMTO_DBLOGIN;
 		$this->password = SIMTO_DBPASS;
 		$this->connect();
-		$this->dbase_sett = new simtoXML(SIMTO_ROOT.DS.'config'.DS.'dbase.sett.xml');
+		$this->dbase_sett = new simtoXML(SIMTO_ROOT.DS.'config'.DS.'dbase'.DS.'dbases.settings.xml');
 		$this->dbUse(PR_DBASE);
 	}
 	
@@ -91,12 +92,13 @@ class simtoDbaserCore implements simtoICore
 			return false;
 		else
 		{	
+			$this->dbase = $dbase;
 			$dbase_path = $this->dbase_sett->find(array('c' => '/dbases/dbase[name="'.$dbase.'"]','w' => 'path'));
 			if(!empty($dbase_path))
 				$this->table_sett = new simtoXML($dbase_path);
 			else
 			{
-				$this->table_sett = new simtoXML(PR_ROOT.DS.'config'.DS.$dbase.'.sett.xml');
+				$this->table_sett = new simtoXML(SIMTO_ROOT.DS.'config'.DS.'dbase'.DS.$dbase.'.sett.xml');
 				$this->dbase_sett->addNode(); 	//TODO: přidat adresu do nastavení database
 			}
 				//TODO: exception
@@ -126,11 +128,11 @@ class simtoDbaserCore implements simtoICore
 	//Clears all results
 	public function clearResults()
 	{
-		unset($this->result);
-		unser($this->result_arr);
-		unset($this->num_rows);
-		unset($this->aff_rows);
-		unset($this->errors);
+		$this->result = '';
+		$this->result_arr = array();
+		$this->num_rows = '';
+		$this->aff_rows = array();
+		$this->errors = array();
 	}
 	
 	//Clears all, results, temporaly row
@@ -316,16 +318,52 @@ class simtoDbaserCore implements simtoICore
 	public function addDb($name = '')
 	{
 		if(empty($name))
-			return false;
+			return t('Database name can not be empty.','adddbemptyname','Dbaser/Database');
 		
-		$code = 'CREATE DATABASE IF NOT EXISTS '.$name;
+		$code = 'SHOW DATABASES LIKE "'.$name.'";';
+		$this->execudeSQL($code);
 		
-		$this->query = $code;
+		if($this->num_rows < 1)
+		{
+			$code = 'CREATE DATABASE IF NOT EXISTS '.$name;
 		
-		if($this->execudeSQL($code))
-			return true;
+			$this->query = $code;
+		
+			if($this->execudeSQL($code))
+			{
+				$search = array('c' => 'dbases/dbase[name="'.$name.'"]', 'w' => '..', 'r' => 'b');
+				if(!$this->dbase_sett->find($search))
+				{
+					$start = $this->dbase_sett->addNode('dbases/dbase');
+					$this->dbase_sett->addNode('name',$name,$start);
+					$this->dbase_sett->addNode('tagname','Database '.$name.' title',$start);
+					$this->dbase_sett->addAttr('tagname',array('langid' => '', 'langcat' => 'dbases/dbname'),$start);
+					$this->dbase_sett->addNode('description','Database '.$name.' description',$start);
+					$this->dbase_sett->addAttr('description',array('langid' => '', 'langcat' => 'dbases/dbdesc'),$start);
+					$this->dbase_sett->addNode('path',SIMTO_ROOT.DS.'config'.DS.'dbase'.DS.$name.'.sett.xml',$start);
+				}
+				
+				return true;
+			}
+			else
+				return false;
+		}
 		else
-			return false;
+		{
+			$search = array('c' => 'dbases/dbase[name="'.$name.'"]', 'w' => '..', 'r' => 'b');
+			if(!$this->dbase_sett->find($search))
+			{
+				$start = $this->dbase_sett->addNode('dbases/dbase');
+				$this->dbase_sett->addNode('name',$name,$start);
+				$this->dbase_sett->addNode('tagname','Database '.$name.' title',$start);
+				$this->dbase_sett->addAttr('tagname',array('langid' => '', 'langcat' => 'dbases/dbname'),$start);
+				$this->dbase_sett->addNode('description','Database '.$name.' description',$start);
+				$this->dbase_sett->addAttr('description',array('langid' => '', 'langcat' => 'dbases/dbdesc'),$start);
+				$this->dbase_sett->addNode('path',SIMTO_ROOT.DS.'config'.DS.'dbase'.DS.$name.'.sett.xml',$start);
+			}
+			
+			return t('Database ;#name#'.$name.'#name#; already exists.','adddbnameexists','Dbaser/Database');
+		}
 	}
 	
 	//Deletes whole database

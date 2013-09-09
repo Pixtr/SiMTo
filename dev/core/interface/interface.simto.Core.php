@@ -11,7 +11,7 @@
 if(!PR) die('Restricted area! You cannot load this page directly.');
 
 Interface simtoICore{
-	static function getInst();
+	public static function getInst();
 }
 
 ?>

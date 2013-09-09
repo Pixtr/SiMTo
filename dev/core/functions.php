@@ -7,12 +7,12 @@ function tCat($string)
 
 function t($string, $id = '', $cat = '')
 {
-	simtoTranslator::getInst()->translate($string, $id, $cat);
+	print simtoTranslator::getInst()->translate($string, $id, $cat);
 }
 
 function tDB($id = '')
 {
-	simtoTranslator::getInst()->translateDb($id);
+	print simtoTranslator::getInst()->translateDb($id);
 }
 
 ?>

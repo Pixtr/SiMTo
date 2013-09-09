@@ -1,7 +1,12 @@
 <?php return array (
-  'cleverAutoloader' => 'C:\wamp\www\AdminPCT\dev\core\classes\class.clever.Autoloader.php',
-  'cleverErrorCatcherCore' => 'C:\wamp\www\AdminPCT\dev\core\classes\class.clever.ErrorCatcher.php',
-  'cleverExceptionCore' => 'C:\wamp\www\AdminPCT\dev\core\classes\class.clever.Exception.php',
-  'cleverICore' => 'C:\wamp\www\AdminPCT\dev\core\interface\interface.clever.Core.php',
-  'cleverToolsCore' => 'C:\wamp\www\AdminPCT\dev\core\classes\class.clever.Tools.php',
+  'simtoAutoloader' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\class.simto.Autoloader.php',
+  'simtoDbaserCore' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\class.simto.Dbaser.php',
+  'simtoErrorCatcherCore' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\class.simto.ErrorCatcher.php',
+  'simtoExceptionCore' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\class.simto.Exception.php',
+  'simtoICore' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\interface\interface.simto.Core.php',
+  'simtoIScrambler' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\interface\interface.simto.Scrambler.php',
+  'simtoScramblerCore' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\class.simto.Scrambler.php',
+  'simtoToolsCore' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\class.simto.Tools.php',
+  'simtoTranslatorCore' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\class.simto.Translator.php',
+  'simtoXMLCore' => 'C:\DISC\SkyDrive\CleverOn\www\SiMTo\dev\core\classes\class.simto.XML.php',
 ); ?>

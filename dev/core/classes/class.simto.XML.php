@@ -7,16 +7,16 @@
 */
 
 //Page restriction
-//if(!PR) die('Restricted area! You cannot load this page directly.');
+if(!defined('PR')) die('Restricted area! You cannot load this page directly.');
 
 //This class will load project settings and return needed variables
-class simtoXMLCore //implements simtoICore
+class simtoXMLCore
 {
 	//Stored instance of class object
 	protected static $inst;
 	
 	//DOM XML object
-	public $xml;
+	protected $xml;
 	
 	//Path of xml file
 	protected $filepath;
@@ -76,8 +76,8 @@ class simtoXMLCore //implements simtoICore
 				's' =>	'',		//name of node where xpath Starts looking
 				'c'	=>	'',		//Conditions for search (path)
 				'w'	=>	'',		//path to What you looking for
-				'r'	=>	't'		//type of Result (t = first result in text, a = all results in array, n = nodelist, c = cached node)
-		),$options);
+				'r'	=>	't'		//type of Result (t = first result in text, a = all results in array, n = nodelist, 
+		),$options);			//c = cached node, b = true if node exists and false if not)
 		
 		$xpath = new DOMXPath($this->xml);
 		$query = '';
@@ -110,21 +110,22 @@ class simtoXMLCore //implements simtoICore
 			$resnode = $this->xml->createTextNode('');
 		
 		//Prepares result
-		if($resnode->length > 0)
 		switch($options['r'])
 		{
 			default:
 			case 't':	//String result
-				$result = $resnode->item(0)->textContent;	
+				if($resnode->length > 0)
+					$result = simtoTranslator::getInst()->translateXML($resnode->item(0));	
 			break;
 			
 			case 'a':	//Array result
-				foreach($resnode as $node)
-					$result[] = $node->nodeValue;
+				if($resnode->length > 0)
+					foreach($resnode as $node)
+						$result[] = $node->nodeValue;
 			break;
 			
 			case 'n':	//Nodelist result
-				$result = $resnode;
+					$result = $resnode;
 			break;
 			
 			case 'c':	//Global cached nodelist result
@@ -132,11 +133,17 @@ class simtoXMLCore //implements simtoICore
 				$this->cnode = $resnode;
 				$result = true;
 			break;
+			
+			case 'b':
+				if($resnode->length > 0)
+					$result = true;
+				else
+					$result = false;
+			break;
 		}
 		
 		return $result;
 	}
-	
 	
 	//Finds node within another node and returns it value
 	//Tagname could be path to right node like node1/node2/node3 and so on
@@ -153,12 +160,15 @@ class simtoXMLCore //implements simtoICore
 		if(!is_object($node) && is_object($this->cnode))
 			$node = $this->cnode;
 		elseif(!is_object($node))
-			return false;
+			$node = $this->xml->documentElement;
 		
 		$result = '';
 		if($first)		//If you want only first value 
 		{
-			$fnode = $node->item(0);
+			if(get_class($node) != 'DOMElement')
+				$fnode = $node->item(0);
+			else 
+				$fnode = $node;
 			foreach($tags as $tag)
 			{
 				if(!is_object($fnode))
@@ -174,15 +184,21 @@ class simtoXMLCore //implements simtoICore
 				
 			}
 			if(get_class($fnode) == 'DOMElement')
-				$result = $fnode->textContent;
+				$result = simtoTranslator::getInst()->translateXML($fnode);
 			else 
 				$result = $fnode;
 		}
 		else		//If you want array of all values
 		{
 			$i = 0;
-			foreach($node as $n)
+			if(get_class($node) == 'DOMElement')
+				$fnode[] = $node;
+			else 
+				$fnode = $node;
+			
+			foreach($fnode as $n)
 			{
+				echo 'tady';
 				$a = 0;
 				foreach($tags as $tag)
 				{	
@@ -204,7 +220,7 @@ class simtoXMLCore //implements simtoICore
 				
 				if(is_object($n))
 					foreach($n as $value)
-						$result[$i][] = $value->textContent;
+						$result[$i][] = simtoTranslator::getInst()->translateXML($value);
 				else 
 					$result[$i][] = $n;
 				$i++;
@@ -217,13 +233,14 @@ class simtoXMLCore //implements simtoICore
 	//Unsets cnode variable
 	public function clearCnode()
 	{
-		unset($this->cnode);
+		$this->cnode = '';
 	}
 	
 	//Adds single node to xml document
 	//Path is xpath to place where node should be created, last item of path is name of node
 	//Start is specific node from which should path be calculated, finds root element if leaved empty
-	public function addNode($path,$data,$start = '')
+	//Returns created node
+	public function addNode($path,$data = '',$start = '')
 	{
 		if(empty($start) || get_class($start) != 'DOMElement')
 			$root = $this->xml->documentElement;
@@ -231,13 +248,37 @@ class simtoXMLCore //implements simtoICore
 			$root = $start;
 		
 		if(empty($path))
-			$tags = array();
+			return false;
 		else
 			$tags = explode('/',$path);
 		$nodename = array_pop($tags);
 		
 		$root = $this->selectNode($tags, $root);
 		
+		$newnode = $this->xml->createElement($nodename,$data);
+		return $root->appendChild($newnode);
+		
+	}
+
+	//Edits single node of xml document
+	//Path is xpath to node, last item of path is name of node
+	//Start is specific node from which should path be calculated, finds root element if leaved empty
+	//It creates the node in case node don't exist
+	public function editNode($path,$data = '',$start = '')
+	{
+		if(empty($start) || get_class($start) != 'DOMElement')
+			$root = $this->xml->documentElement;
+		else
+			$root = $start;
+	
+		if(empty($path))
+			$tags = array();
+		else
+			$tags = explode('/',$path);
+		$nodename = array_pop($tags);
+	
+		$root = $this->selectNode($tags, $root);
+	
 		$node = $root->getElementsByTagName($nodename)->item(0);
 		if(empty($node))
 		{
@@ -247,7 +288,7 @@ class simtoXMLCore //implements simtoICore
 		else
 			$node->nodeValue = $data;
 	}
-	
+
 	//Moves node from one location to another
 	public function moveNode($node,$path,$start = '')
 	{
@@ -380,25 +421,19 @@ class simtoXMLCore //implements simtoICore
 		return $root;
 	}
 	
-	
+	//Saves xml content into file
 	public function save()
 	{
-		$path = simtoTools::getInst()->preparePath($this->filepath);
+		$path = simtoToolsCore::preparePath($this->filepath);
 		if($path)
 		{
-			if(simtoTools::getInst()->saveToFile($path,$this->show()))
+			if(simtoToolsCore::saveToFile($path,$this->show()))
 				return true;
 		}
 		
 		return false;
 	}
-	
-	
-	public function create()
-	{
-		
-	}
-	
+
 	//Returns xml in string
 	public function show()
 	{

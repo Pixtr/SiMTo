@@ -1,13 +1,12 @@
 <?php
 
 //Page restriction
-//if(!PR) die('Restricted area! You cannot load this page directly.');
+if(!defined('PR')) die('Restricted area! You cannot load this page directly.');
 
 //Most common functions used in application
-class simtoTools{
+class simtoToolsCore{
 	//Stored instance of class object
 	protected static $inst;
-
 	
 	//Get instance object from class
 	public static function getInst()
@@ -16,6 +15,27 @@ class simtoTools{
 			simtoTools::$inst = new simtoTools();
 	
 		return simtoTools::$inst;
+	}
+	
+	//Nesting function for arrayToString
+	protected static function arrayBuild($array,$first)
+	{
+		$string = '';
+		foreach($array as $key => $value)
+		{
+			$first_key = '';
+			if(!is_numeric($key))
+				$key = "'".$key."'";
+			$first_key .= $first."[".$key."]";
+			
+			if(is_array($value))
+				$first_key = simtoTools::arrayBuild($value,$first_key);
+			else
+				$first_key .= " = '".$value."';\n";
+			
+			$string .= $first_key;
+		}
+		return $string;
 	}
 	
 	//Return string from array
@@ -28,16 +48,21 @@ class simtoTools{
 			case 'build':
 				foreach($array as $key => $value)
 				{
-					$string .= '$'.$varname."['".$key."']";
-					while(is_array($value))
-						foreach($value as $key => $value)
-							$string .= "['".$key."']";
-					$string .= " = '".$value."';\n";
+					if(!is_numeric($key))
+						$key = "'".$key."'";
+					$first_key = '$'.$varname."[".$key."]";
+					if(is_array($value))
+						$first_key = simtoTools::arrayBuild($value,$first_key);
+					else
+						$first_key .= " = '".$value."';\n";
+					
+					$string .= $first_key;
 				}
 			break;
 			
 			case 'export':
-				$string = print_r($array,true);
+				$string = var_export($array,true);
+				$string = stripslashes($string);
 			break;
 			
 			case 'seril':
@@ -76,6 +101,9 @@ class simtoTools{
 	//Prepares file path creating all needed folders
 	public static function preparePath($path)
 	{
+		$path = str_replace("\\",DS,$path);
+		$path = str_replace('/',DS,$path);
+		
 		$ds = strrpos($path,DS,-1);
 		$dir_path = substr($path,0, $ds-strlen($path)+1);
 		
@@ -118,9 +146,37 @@ class simtoTools{
 
 	//Saves data to file by creating it or rewriting it
 	public static function saveToFile($file,$data){
-		$handler = fopen($file, 'w+');
-		fwrite($handler,$data);
-		fclose($handler);
+		simtoTools::preparePath($file);
+		
+		if($handler = fopen($file, 'c'))
+		{
+			$start_time = microtime();
+			
+			do
+			{
+				$locker = flock($handler, LOCK_EX);
+				if(!$locker) usleep(round(rand(0, 100)*1000));
+			}while ((!$locker) && ((microtime()-$start_time) < 1));
+			
+			if($locker)
+			{
+				ftruncate($handler,0);
+				$fw = fwrite($handler,$data);
+				flock($handler, LOCK_UN);
+				fclose($handler);
+				
+				if($fw === false)
+					return false;
+			}
+			else 
+			{
+				fclose($handler);
+				return false;
+			}
+		}
+		else
+			return false;
+		
 		return true;
 	}	
 

@@ -9,9 +9,6 @@
 
 //Page restriction
 if(basename($_SERVER['PHP_SELF']) == 'simto.php') die('Restricted area! You cannot load this page directly.');
-
-
-	
 	
 class simtoCore{
 	private $cClasses = array();
@@ -55,7 +52,7 @@ class simtoCore{
 		spl_autoload_register(array(simtoAutoloader::getInst(), 'load'));
 			
 		//Default error handling
-		set_error_handler(array(simtoErrorCatcher::getInst(), 'handler'));
+		//set_error_handler(array(simtoErrorCatcher::getInst(), 'handler'));
 			
 		//Default exception handling
 		set_exception_handler(array(simtoException::getInst(), 'handler'));

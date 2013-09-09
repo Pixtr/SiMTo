@@ -58,7 +58,6 @@ class simtoTranslatorCore implements simtoICore
 	{
 		if(empty($lang))
 		{
-			session_start();
 			if(isset($_REQUEST['lang']) && !empty($_REQUEST['lang']) && $this->inLang($_REQUEST['lang']))
 				$this->active_lang = $_REQUEST['lang'];
 			elseif(isset($_SESSION['lang']) && !empty($_SESSION['lang']) && $this->inLang($_SESSION['lang']))
@@ -105,27 +104,84 @@ class simtoTranslatorCore implements simtoICore
 	//Translates segments of text from dictionary
 	public function translate($string, $id = '', $cat = '')
 	{
+		$variables = array();
+		if (preg_match('/\;\#(?<id>[A-Za-z][a-z0-9_]*?)\#/', $string, $m))
+			foreach($m['id'] as $tag)
+			{
+				$pattern = '/\;\#'.$tag.'\#(?<var>[A-Za-z][a-z0-9_]*?)\#'.$tag.'\#\;/';
+				if(preg_match($pattern, $string, $n))
+				{
+					$variables[$tag] = $n['var'][0];
+					$string = preg_replace($pattern, ';#'.$tag.'#;',$string);
+				}
+			}
+	
 		if(empty($id))
 			$id = $this->createWord($string, debug_backtrace() , $cat);
 		
 		$translate = $string;
-		if(!$this->inDc($id, $cat, 'simto'))
+		if(!$this->inDc($id, $this->addCategory($cat), 'simto'))
 		{
 			if(!empty($id))
 				$this->addWord($string, $id, $cat);
 		}
-		elseif($active = $this->inDc($id, $cat, 'active'))
+		elseif($active = $this->inDc($id, $this->addCategory($cat), 'active'))
 			$translate = $active;
-		elseif($default = $this->inDc($id, $cat, 'default'))
+		elseif($default = $this->inDc($id, $this->addCategory($cat), 'default'))
 			$translate = $default;
 			
+		foreach($variables as $tag => $var)
+			$translate = preg_replace('/\;\#'.$tag.'\#\;/',$var,$translate);
+		
+		$translate = preg_replace('/\;\#[A-Za-z][a-z0-9_]*\#\;/','',$translate);
+		
 		return $translate;
+	}
+
+	//Translates segments of text from dictionary
+	public function translateXML($node)
+	{
+		if(get_class($node) != 'DOMElement')
+			return false;
+		
+		if($node->hasAttribute('langid'))
+		{
+			$translate = $node->textContent;
+			
+			$langid = $node->getAttribute('langid');
+			if(empty($langid))
+			{
+				$langcat = $node->getAttribute('langcat');
+				if(empty($langcat))
+					$langcat = 'OtherXML';
+				
+				$id = hash('crc32',$translate).hash('crc32',rand());
+				$this->addWord($translate, $id, $langcat);
+				$node->setAttribute('langid', $id);
+			}
+			else 
+			{
+				$langcat = $node->getAttribute('langcat');
+				if(empty($langcat))
+					$langcat = 'OtherXML';
+				
+				if(!$this->inDc($langid, $langcat, 'simto'))
+					$this->addWord($translate, $langid, $langcat);
+				elseif($active = $this->inDc($langid, $langcat, 'active'))
+					$translate = $active;
+				elseif($default = $this->inDc($langid, $langcat, 'default'))
+					$translate = $default;
+			}
+			return $translate;
+		}
+		else 
+			return $node->textContent;
 	}
 
 	//Checks if word is in dictionary and returns it
 	protected function inDc($id = '', $cat = '',$dic = 'simto')
 	{
-		$word_cat = $this->addCategory($cat);
+		$word_cat = $cat;
 		
 		switch ($dic)
 		{
@@ -143,9 +199,9 @@ class simtoTranslatorCore implements simtoICore
 			break;
 		}
 		
-	
 		foreach($word_cat as $key)
-			$array = $array[$key];
+			if(isset($array[$key]))
+				$array = $array[$key];
 		
 		if(isset($array[$id]))
 			return $array[$id];
@@ -158,42 +214,36 @@ class simtoTranslatorCore implements simtoICore
 	{
 		ksort($dictionary);
 		
-		$string = '<?php'."\n";
-		$string .= simtoTools::arrayToString($dictionary, 'dictionary');
+		$string = '<?php'."\n".'return ';
+		$string .= simtoTools::arrayToString($dictionary, '', 'export');
 		$string .= '?>';
 		
 		$file_name = key($dictionary);
-		$file_path = simtoTools::preparePath(PR_ROOT.DS.'langs'.DS.$lang.DS.$file_name.'.php');
+		$file_path = SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'languages'.DS.$lang.DS.$file_name.'.php';
 		
-		if($handler = fopen($file_path,'w+'))
-		{
-			fwrite($handler,$string);
-			fclose($handler);
-			return true;
-		}
-		else
-		{
-			//TODO: exception
-			return false;
-		}
+		return simtoTools::saveToFile($file_path,$string);
 	}
 	
 	//Creates new dictionary file copying simto dictionary
 	protected function addDc($lang, $filename)
 	{
-		$simto_path = PR_ROOT.DS.'langs'.DS.'simto'.DS.$filename;
-		$lang_path = PR_ROOT.DS.'langs'.DS.$lang.DS.$filename;
+		$simto_path = SIMTO_ROOT.DS.'projects'.DS.'PR_ID'.DS.'languages'.DS.'simto'.DS.$filename;
+		$lang_path = SIMTO_ROOT.DS.'projects'.DS.'PR_ID'.DS.'languages'.DS.$lang.DS.$filename;
 		
 		$dictionary = array();
-		@include($simto_path);
+		$dic = array();
+		$dic = @include($simto_path);
+		$dictionary = array_replace_recursive($dictionary,$dic);
 		$simto_dc = $dictionary;
 		$simto_dc = simtoTools::clearArr($simto_dc);
 		
 		$dictionary = array();
-		@include($lang_path);
+		$dic = array();
+		$dic = @include($lang_path);
+		$dictionary = array_replace_recursive($dictionary,$dic);
 		$lang_dc = $dictionary;
 		
-		$dictionary = array_merge($simto_dc,$lang_dc);
+		$dictionary = array_replace_recursive($simto_dc,$lang_dc);
 		return $this->createDc($lang, $dictionary);
 	}
 	
@@ -209,17 +259,21 @@ class simtoTranslatorCore implements simtoICore
 		$dc_name = current($word_cat);
 		
 		$new_word = array();
+		$current =& $new_word;
 		foreach($word_cat as $key)
-			$new_word =& $new_word[$key];
+			$current =& $current[$key];
 		
-		$new_word[$id] = $string;
+		$current[$id] = $string;
 		
-		$dc_file = PR_ROOT.DS.'langs'.DS.'simto'.DS.$dc_name.'.php';
-		$dictionary = array();
+		$dc_file = simtoTools::preparePath(SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'languages'.DS.'simto'.DS.$dc_name.'.php');
+		$dictionary = array(); $dic = array();
 		if(file_exists($dc_file))
-			include($dc_file);
+		{
+			$dic = include($dc_file);
+			$dictionary = array_replace_recursive($dictionary,$dic);
+		}
 		
-		$dictionary = array_merge($dictionary,$new_word);
+		$dictionary = array_replace_recursive($dictionary,$new_word);
 		
 		//TODO: najít správny file v případě templatování!!!
 		if($this->createDc('simto', $dictionary))
@@ -229,14 +283,14 @@ class simtoTranslatorCore implements simtoICore
 			
 			$cat_var = '';
 			if(!empty($cat))
+			{
 				$cat_var = ",'".simtoTools::escapeAp($cat)."'";
+			}
 			
 			$file_lines[$line_num-1] = preg_replace("/\bt\((.*)\)[;|\.]/","t('".simtoTools::escapeAp($string)."','".simtoTools::escapeAp($id)."'".$cat_var.");",$file_lines[$line_num-1]);
 			$file_content = implode("\n",$file_lines);
 			
-			$handler = fopen($file_path, 'w+');
-			fwrite($handler,$file_content);
-			fclose($handler);
+			simtoTools::saveToFile($file_path,$file_content);
 			
 			$this->createCache('simto');
 			$this->simto_dictionary = $this->loadCache('simto');
@@ -254,19 +308,27 @@ class simtoTranslatorCore implements simtoICore
 		$dc_name = current($word_cat);
 		
 		$new_word = array();
+		$current =& $new_word;
 		foreach($word_cat as $key)
-			$new_word =& $new_word[$key];
+			$current =& $current[$key];
 		
-		$new_word[$id] = $string;
+		$current[$id] = $string;
 		
-		$dc_file = PR_ROOT.DS.'langs'.DS.'simto'.DS.$dc_name.'.php';
+		$dc_file = simtoTools::preparePath(SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'languages'.DS.'simto'.DS.$dc_name.'.php');
 		$dictionary = array();
 		if(file_exists($dc_file))
-			include($dc_file);
+		{
+			$dic = include($dc_file);
+			$dictionary = array_replace_recursive($dictionary,$dic);
+		}
 		
-		$dictionary = array_merge($dictionary,$new_word);
+		$dictionary = array_replace_recursive($dictionary,$new_word);
 		if($this->createDc('simto', $dictionary))
+		{
+			$this->createCache('simto');
+			$this->simto_dictionary = $this->loadCache('simto');
 			return true;
+		}
 		else
 			return false;
 	}
@@ -281,7 +343,7 @@ class simtoTranslatorCore implements simtoICore
 	//Adds category and returns whole list
 	protected function addCategory($cat = '')
 	{
-		$cats = '';
+		$cats = array();
 		if(!empty($cat))
 			$cats = explode('/',$cat);
 		
@@ -289,7 +351,7 @@ class simtoTranslatorCore implements simtoICore
 		$word_cat = array_merge($word_cat,$cats);
 		
 		if(empty($word_cat))
-			$word_cat = array('other');
+			$word_cat = array('Other');
 		
 		return $word_cat;
 	}
@@ -301,9 +363,9 @@ class simtoTranslatorCore implements simtoICore
 		$cache = SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'cache'.DS.'dictionary.'.$lang.'.php';
 		
 		if(file_exists($cache))
-			include($cache);
+			$dictionary = include($cache);
 		elseif($this->createCache($lang))
-			include($cache);
+			$dictionary = include($cache);
 		else 
 			//TODO: exception
 			return false;
@@ -316,25 +378,22 @@ class simtoTranslatorCore implements simtoICore
 	{
 		$dictionary = array();
 		
-		$files = $this->fileList(PR_ROOT.DS.'langs'.DS.$lang.DS);
+		$files = $this->fileList(SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'languages'.DS.$lang.DS);
+
 		foreach($files as $file)
-		{
 			if(file_exists($file))
-				include($file);
-		}
+			{
+				$dic = include($file);
+				$dictionary = array_replace_recursive($dictionary,$dic);
+			}
 		
-		$string = '<?php'."\n";
-		$string .= simtoTools::arrayToString($dictionary, 'dictionary');
-		$string .= '?>';
+		$string = '<?php return '."\n";
+		$string .= simtoTools::arrayToString($dictionary,'', 'export');
+		$string .= '; ?>';
 		
-		$cache = simtoTools::preparePath(SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'cache'.DS.'dictionary.'.$lang.'.php');
+		$cache = SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'cache'.DS.'dictionary.'.$lang.'.php';
 		
-		if($handler = fopen($cache,'w+'))
-		{
-			fwrite($handler, $string);
-			fclose($handler);
-		}
-		else 
+		if(!simtoTools::saveToFile($cache,$string))
 			//TODO: exception
 			return false;
 		
@@ -345,13 +404,23 @@ class simtoTranslatorCore implements simtoICore
 	protected function fileList($dir)
 	{
 		$list = array();
+		$new = array();
 		$files = scandir($dir);
 		foreach($files as $file)
 		{
-			if(is_dir($dir.$file))
-				$list = array_merge($list,$this->fileList($dir.$file));
-			elseif(substr($file, -4) == '.php')
-				$list = array_push($list,$dir.$file);
+			if($file[0] != '.')
+			{
+				if(is_dir($dir.$file))
+				{
+					$new = $this->fileList($dir.$file.DS);
+					$list = array_merge($list,$new);
+				}
+				elseif(substr($file, -4) == '.php')
+				{
+					$element = $dir.$file;
+					array_push($list,$element);
+				}
+			}
 		}
 		
 		return $list;
@@ -504,7 +573,8 @@ class simtoTranslatorCore implements simtoICore
 		
 		$options = array('where' => 't_id = "'.$id.'"'.$lang);
 		simtoDbaser::getInst()->select($this->dic_table, 'id,t_id,lang',$options);
-		if(!empty(simtoDbaser::getInst()->resOut()))
+		$result = simtoDbaser::getInst()->resOut();
+		if(!empty($result))
 			return true;
 		else 
 			return false;

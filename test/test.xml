@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tables>
+  <table instaled="1">
+    <name>tab_name</name>
+    <tagname langid="" langcat="tables/tabname">Jméno tabulky pro nadpis</tagname>
+    <description langid="" langcat="tables/tabdesc">Popis tabulky pro pozdější identifikování</description>
+    <columns>
+      <column visible="1/0" scrambler="simRan/0" translate="1/0">
+        <tagname langid="zmena" langcat="tables/colname">Názav sloupku pro nadpis</tagname>
+        <description langid="" langcat="tables/coldesc">Popis sloupku pro pozdější identifikování</description>
+        <settings>
+          <name>column_name</name>
+          <type>CHAR</type>
+          <lenght>30</lenght>
+          <default>Hodnota</default>
+          <null>1/0</null>
+          <key>Primary/Unique/Multiple</key>
+          <auto>1/0</auto>
+        </settings>
+        <security>
+          <html>
+            <strip>1/0</strip>
+            <!-- Odstranění či neodstranění html tagu -->
+            <tags>
+              <tag>b</tag>
+              <tag>div</tag>
+            </tags>
+            <!-- Povolené html tagy -->
+          </html>
+          <safe>1/0</safe>
+          <!-- Zkontroluje zda zadávané údaje jsou bezpečné proti SQL injection -->
+          <type>1/0</type>
+          <!-- Zkontroluje zda se při zapisování vkládá správný typ, bezvýznamné pro id atd. -->
+        </security>
+      </column>
+    </columns>
+    <name></name>
+  </table>
+</tables>
