@@ -105,7 +105,7 @@ class simtoTranslatorCore implements simtoICore
 	public function translate($string, $id = '', $cat = '')
 	{
 		$variables = array();
-		if (preg_match('/\;\#(?<id>[A-Za-z][a-z0-9_]*?)\#/', $string, $m))
+		if(preg_match('/\;\#(?<id>[A-Za-z][a-z0-9_]*?)\#/', $string, $m))
 			foreach($m['id'] as $tag)
 			{
 				$pattern = '/\;\#'.$tag.'\#(?<var>[A-Za-z][a-z0-9_]*?)\#'.$tag.'\#\;/';
@@ -139,7 +139,7 @@ class simtoTranslatorCore implements simtoICore
 	}
 
 	//Translates segments of text from dictionary
-	public function translateXML($node)
+	public function translateXML($node,$cat = '')
 	{
 		if(get_class($node) != 'DOMElement')
 			return false;
@@ -152,6 +152,9 @@ class simtoTranslatorCore implements simtoICore
 			if(empty($langid))
 			{
 				$langcat = $node->getAttribute('langcat');
+				if(!empty($cat))
+					$langcat = $cat.'/'.$langcat;
+				
 				if(empty($langcat))
 					$langcat = 'OtherXML';
 				
@@ -162,6 +165,9 @@ class simtoTranslatorCore implements simtoICore
 			else 
 			{
 				$langcat = $node->getAttribute('langcat');
+				if(!empty($cat))
+					$langcat = $cat.'/'.$langcat;
+				
 				if(empty($langcat))
 					$langcat = 'OtherXML';
 				
@@ -219,6 +225,7 @@ class simtoTranslatorCore implements simtoICore
 		$string .= '?>';
 		
 		$file_name = key($dictionary);
+		$file_name = simtoTools::prepareFileName($file_name,true);
 		$file_path = SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'languages'.DS.$lang.DS.$file_name.'.php';
 		
 		return simtoTools::saveToFile($file_path,$string);

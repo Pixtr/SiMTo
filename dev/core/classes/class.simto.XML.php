@@ -160,7 +160,7 @@ class simtoXMLCore
 		if(!is_object($node) && is_object($this->cnode))
 			$node = $this->cnode;
 		elseif(!is_object($node))
-			$node = $this->xml->documentElement;
+			$node = $this->root();
 		
 		$result = '';
 		if($first)		//If you want only first value 
@@ -242,18 +242,20 @@ class simtoXMLCore
 	//Returns created node
 	public function addNode($path,$data = '',$start = '')
 	{
-		if(empty($start) || get_class($start) != 'DOMElement')
-			$root = $this->xml->documentElement;
+		if(empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->xml;
+		elseif(!empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->root();
 		else
 			$root = $start;
 		
-		if(empty($path))
-			return false;
-		else
-			$tags = explode('/',$path);
-		$nodename = array_pop($tags);
+		if(empty($path)) return false;
+		else $tags = explode('/',$path);
 		
-		$root = $this->selectNode($tags, $root);
+		$nodename = array_pop($tags);
+		$path = implode('/',$tags);
+		
+		$root = $this->selectNode($path, $root);
 		
 		$newnode = $this->xml->createElement($nodename,$data);
 		return $root->appendChild($newnode);
@@ -266,18 +268,20 @@ class simtoXMLCore
 	//It creates the node in case node don't exist
 	public function editNode($path,$data = '',$start = '')
 	{
-		if(empty($start) || get_class($start) != 'DOMElement')
-			$root = $this->xml->documentElement;
+		if(empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->xml;
+		elseif(!empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->root();
 		else
 			$root = $start;
 	
-		if(empty($path))
-			$tags = array();
-		else
-			$tags = explode('/',$path);
+		if(empty($path)) $tags = array();
+		else $tags = explode('/',$path);
+		
 		$nodename = array_pop($tags);
+		$path = implode('/',$tags);
 	
-		$root = $this->selectNode($tags, $root);
+		$root = $this->selectNode($path, $root);
 	
 		$node = $root->getElementsByTagName($nodename)->item(0);
 		if(empty($node))
@@ -292,8 +296,10 @@ class simtoXMLCore
 	//Moves node from one location to another
 	public function moveNode($node,$path,$start = '')
 	{
-		if(empty($start) || get_class($start) != 'DOMElement')
-			$root = $this->xml->documentElement;
+		if(empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->xml;
+		elseif(!empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->root();
 		else
 			$root = $start;
 		
@@ -301,35 +307,27 @@ class simtoXMLCore
 			//TODO: exception
 			return false;
 		
-		if(empty($path))
-			$tags = array();
-		else
-			$tags = explode('/',$path);
-		
-		$root = $this->selectNode($tags, $root);
+		$root = $this->selectNode($path, $root);
 		$root->appendChild($node);
 	}
 	
 	//Imports node from another xml document
 	public function importNode($node,$path,$start = '')
 	{
-		if(get_class($node) != 'DOMElement')
+		if(@get_class($node) != 'DOMElement')
 			//TODO: exception
 			return false;
 		
 		$imported = $this->xml->importNode($node, true);
 		
-		if(empty($start) || get_class($start) != 'DOMElement')
-			$root = $this->xml->documentElement;
+		if(empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->xml;
+		elseif(!empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->root();
 		else
 			$root = $start;
 		
-		if(empty($path))
-			$tags = array();
-		else
-			$tags = explode('/',$path);
-		
-		$root = $this->selectNode($tags, $root);
+		$root = $this->selectNode($path, $root);
 		$root->appendChild($imported);
 	}
 	
@@ -337,17 +335,14 @@ class simtoXMLCore
 	//Variable attr could be string in format name=value or array of attributes for node
 	public function setAttr($path,$attr,$start = '')
 	{
-		if(empty($start) || get_class($start) != 'DOMElement')
-			$root = $this->xml->documentElement;
+		if(empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->xml;
+		elseif(!empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->root();
 		else
 			$root = $start;
 		
-		if(empty($path))
-			$tags = array();
-		else
-			$tags = explode('/',$path);
-		
-		$root = $this->selectNode($tags, $root);
+		$root = $this->selectNode($path, $root);
 		if(!is_array($attr))
 		{
 			$key = substr($attr,0,strpos($attr,'='));
@@ -371,17 +366,14 @@ class simtoXMLCore
 	//Removes whole node from XML document and returns removed node
 	public function deleteNode($path,$start = '')
 	{
-		if(empty($start) || get_class($start) != 'DOMElement')
-			$root = $this->xml->documentElement;
+		if(empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->xml;
+		elseif(!empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->root();
 		else
 			$root = $start;
 		
-		if(empty($path))
-			$tags = array();
-		else
-			$tags = explode('/',$path);
-		
-		$node = $this->selectNode($tags, $root);
+		$node = $this->selectNode($path, $root);
 		$parent = $node->parentNode;
 		return $parent->removeChild($node);
 	} 
@@ -389,24 +381,42 @@ class simtoXMLCore
 	//Removes attribute from node and returns value of removed attribute
 	public function deleteAttr($path,$start = '')
 	{
-		if(empty($start) || get_class($start) != 'DOMElement')
-			$root = $this->xml->documentElement;
+		if(empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->xml;
+		elseif(!empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->root();
 		else
+			$root = $start;
+		
+		if(empty($path)) $tags = array();
+		else $tags = explode('/',$path);
+		
+		$attname = array_pop($tags);
+		$path = implode('/',$tags);
+		
+		$node = $this->selectNode($path, $root);
+		return $node->removeAttribute($attname);
+	}
+	
+	//Returns node based on path, root is starting node, list (false - returns first single node/ true - returns nodelist)
+	public function selectNode($path,$start = '',$list = false)
+	{
+		if(empty($start))
+			$root = $this->xml;
+		elseif(!empty($start) && @get_class($start) != 'DOMElement')
+			$root = $this->root();
+		else 
 			$root = $start;
 		
 		if(empty($path))
 			$tags = array();
 		else
 			$tags = explode('/',$path);
-		$attname = array_pop($tags);
 		
-		$node = $this->selectNode($tags, $root);
-		return $node->removeAttribute($attname);
-	}
-	
-	//Returns right node based on path tags
-	protected function selectNode($tags,$root)
-	{
+		$last = '';
+		if($list)
+			$last = array_pop($tags);
+		
 		foreach($tags as $tag)
 		{
 			$node = $root->getElementsByTagName($tag)->item(0);
@@ -418,6 +428,20 @@ class simtoXMLCore
 			else
 				$root = $node;
 		}
+		
+		if($list)
+			$root = $root->getElementsByTagName($last);
+		
+		return $root;
+	}
+		
+	//Returns document root
+	public function root()
+	{
+		$root = $this->xml->documentElement;
+		if(@get_class($root) != 'DOMElement')
+			$root = $this->xml;
+		
 		return $root;
 	}
 	
@@ -434,6 +458,14 @@ class simtoXMLCore
 		return false;
 	}
 
+	//Clears whole xml document
+	public function clear()
+	{
+		$root = $this->xml->documentElement;
+		if(!empty($root))
+			$this->xml->removeChild($root);
+	} 
+	
 	//Returns xml in string
 	public function show()
 	{

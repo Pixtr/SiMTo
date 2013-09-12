@@ -334,7 +334,7 @@ class simtoDbaserCore implements simtoICore
 				$search = array('c' => 'dbases/dbase[name="'.$name.'"]', 'w' => '..', 'r' => 'b');
 				if(!$this->dbase_sett->find($search))
 				{
-					$start = $this->dbase_sett->addNode('dbases/dbase');
+					$start = $this->dbase_sett->addNode('dbases/dbase','','root');
 					$this->dbase_sett->addNode('name',$name,$start);
 					$this->dbase_sett->addNode('tagname','Database '.$name.' title',$start);
 					$this->dbase_sett->addAttr('tagname',array('langid' => '', 'langcat' => 'dbases/dbname'),$start);
@@ -353,7 +353,7 @@ class simtoDbaserCore implements simtoICore
 			$search = array('c' => 'dbases/dbase[name="'.$name.'"]', 'w' => '..', 'r' => 'b');
 			if(!$this->dbase_sett->find($search))
 			{
-				$start = $this->dbase_sett->addNode('dbases/dbase');
+				$start = $this->dbase_sett->addNode('dbases/dbase','','root');
 				$this->dbase_sett->addNode('name',$name,$start);
 				$this->dbase_sett->addNode('tagname','Database '.$name.' title',$start);
 				$this->dbase_sett->addAttr('tagname',array('langid' => '', 'langcat' => 'dbases/dbname'),$start);

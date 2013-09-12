@@ -180,4 +180,20 @@ $array3 = array_replace_recursive($array,$array2);
 print_r($array3);
 tCat('Test');
 t('ahoj','a8e895058cccdac3');
+
+$xml = new simtoXML();
+$xml->clear();
+
+$xml->addNode('root/element');
+echo ' tady '.get_class($xml->root()).' tady ';
+$xml->addNode('root/element');
+$nodes = $xml->selectNode('element','',true);
+echo get_class($nodes);
+foreach($nodes as $node)
+	print_r($node);
+print_r($xml->show());
+
+echo substr('start1/neco/tady',0,strpos('start1/neco/tady','/'));
+
+echo simtoTools::prepareFileName('.Ahoj tady´´´ˇ-jsem..ja_k-se+mas!ty?<>*-+/');
 ?>
