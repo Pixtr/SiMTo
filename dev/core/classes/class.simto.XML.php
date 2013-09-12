@@ -28,7 +28,7 @@ class simtoXMLCore
 	{
 		$this->filepath = $file;
 		
-		if(file_exists($file) || !empty($file))
+		if(file_exists($file) && !empty($file))
 		{
 			$this->xml = new DOMDocument();
 			$this->xml->formatOutput = true;
@@ -448,10 +448,10 @@ class simtoXMLCore
 	//Saves xml content into file
 	public function save()
 	{
-		$path = simtoToolsCore::preparePath($this->filepath);
+		$path = simtoTools::preparePath($this->filepath);
 		if($path)
 		{
-			if(simtoToolsCore::saveToFile($path,$this->show()))
+			if(simtoTools::saveToFile($path,$this->show()))
 				return true;
 		}
 		

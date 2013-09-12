@@ -20,7 +20,7 @@ class simtoExceptionCore extends Exception{
 		$this->cache_path = SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'cache'.DS.'exceptions.list.xml';
 		$this->folder_path = SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'exceptions'.DS;
 		
-		if(!file_exists($cache_path))
+		if(!file_exists($this->cache_path))
 			$this->createCache();
 		
 		$this->loadCache();
@@ -35,8 +35,27 @@ class simtoExceptionCore extends Exception{
 	}
 	
 	//Handles all trown exceptions
-	public function handler($message,$id = '',$cat = '')
+	public function handler($code)
 	{
+		$string = $code->getMessage();
+		$ds = (strpos($string,'|') < 1) ? strlen($string) : strpos($string,'|');
+		
+		$message = substr($string,0,$ds);
+		$message = preg_replace('/^ */','',$message);
+		$message = preg_replace('/ *$/','',$message);
+		
+		$string = substr($string,$ds + 1,strlen($string));
+		
+		$ds = (strpos($string,'|') < 1) ? strlen($string) : strpos($string,'|');
+		
+		$id = substr($string,0,$ds);
+		$id = preg_replace('/^ */','',$id);
+		$id = preg_replace('/ *$/','',$id);
+		
+		$cat = substr($string,$ds + 1,strlen($string));
+		$cat = preg_replace('/^ */','',$cat);
+		$cat = preg_replace('/ *$/','',$cat);
+		
 		$variables = array();
 		if(preg_match('/\;\#(?<id>[A-Za-z][a-z0-9_]*?)\#/', $message, $m))
 			foreach($m['id'] as $tag)
@@ -48,11 +67,12 @@ class simtoExceptionCore extends Exception{
 					$message = preg_replace($pattern, ';#'.$tag.'#;',$message);
 				}
 			}
-		
+				
 		if(empty($id))
 		{
-			$conditions = debug_backtrace();
+			$conditions = $code->getTrace();
 			$lastcon = end($conditions);
+			
 			$file_path = $lastcon['file'];
 			$line_num = $lastcon['line'];
 			$id = hash('crc32',$line_num).hash('crc32',$message);
@@ -97,7 +117,9 @@ class simtoExceptionCore extends Exception{
 	//If exception does not exists it will create it
 	protected function addException($id,$cat,$message = '',$settings = array())
 	{
-		$filename = substr($cat,0,strpos($cat,'/'));
+		$ds = (strpos($cat,'/') < 1) ? strlen($cat) : strpos($cat,'/');
+		
+		$filename = substr($cat,0,$ds);
 		$filename = simtoTools::prepareFileName($filename,true);
 		$file = new simtoXML(SIMTO_ROOT.DS.'projects'.DS.PR_ID.DS.'exceptions'.DS.$filename.'.xml');
 		

@@ -193,7 +193,12 @@ foreach($nodes as $node)
 	print_r($node);
 print_r($xml->show());
 
-echo substr('start1/neco/tady',0,strpos('start1/neco/tady','/'));
-
+echo $ds = (strpos('  zprava pro exception | idecko','|') < 1) ? strlen('  zprava pro exception | idecko') : strpos('  zprava pro exception | idecko','|');
+echo $filename = substr('  zprava pro exception | idecko',0,$ds);
+echo 'Tady:'.$filename = preg_replace('/^ */','',$filename);
+echo 'Tady:'.$filename = preg_replace('/ *$/','',$filename);
+echo 'Tady:'.$filename = substr('  zprava pro exception ',$ds+1,strlen('  zprava pro exception | idecko'));
 echo simtoTools::prepareFileName('.Ahoj tady´´´ˇ-jsem..ja_k-se+mas!ty?<>*-+/');
+
+throw new simtoException('message | id | cat/neco');
 ?>
